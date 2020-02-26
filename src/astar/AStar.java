@@ -18,45 +18,11 @@ import java.util.PriorityQueue;
 
 public class AStar
 {
-    // Sample 1 (expected 14)
-    // char[][] sample1 =  {{'.', '.', '.', '#', '.', '.'}, {'.', '.', '#', '#', '#', '#'}, {'#', '.', '#', '.', '.', '.'}, {'#', '.', '#', '.', '#', '.'}, {'.', '.', '.', '.', '#', '.'}, {'.', '.', '.', '.', '#', '.'}};
     
-    // Sample 2 (expected 54)
-    // char[][] sample2 =  {{'.', '#', '.', '.', '.', '#', '.', '.', '.', '#', '.', '.', '.'}, {'.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.'}, {'.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.'}, {'.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.'}, {'.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.'}, {'.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.'}, {'.', '.', '.', '#', '.', '.', '.', '#', '.', '.', '.', '#', '.'}};
-    
-	public static void main(String[] args) {
-		char[][] sample1 =  
-			{{'.', '.', '.', '#', '.', '.'}
-			,{'.', '.', '#', '#', '#', '#'}
-			,{'#', '.', '#', '.', '.', '.'}
-			,{'#', '.', '#', '.', '#', '.'}
-			,{'.', '.', '.', '.', '#', '.'}
-			,{'.', '.', '.', '.', '#', '.'}};
-		char[][] sample2 =  {{'.', '#', '.', '.', '.', '#', '.', '.', '.', '#', '.', '.', '.'}, {'.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.'}, {'.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.'}, {'.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.'}, {'.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.'}, {'.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.'}, {'.', '.', '.', '#', '.', '.', '.', '#', '.', '.', '.', '#', '.'}};
-		System.out.println(shortestPathLength(sample1));
-		System.out.println(shortestPathLength(sample2));
-	}
-	
-    public static int shortestPathLength(char[][] grid) {
-        return AstarSearchPath(new Point2DI(0, 0), new Point2DI(grid.length-1,grid[0].length -1), grid).size();
-    }
-    static float [] computeWeightMap(char [][] grid) {
-    	int width = grid.length;
-    	int height = grid[0].length;
-    	float [] weights = new float[width*height];
-    	for (int x = 0; x < width; x++) {
-    		for (int y = 0; y < height; y++) {
-    			float w = grid[x][y]=='.' ? 1.0f : Float.MAX_VALUE;
-    			weights[x + y * width] = w;
-    		}
-    	}
-    	return weights;
-    }
-    
-    private static class Point2DI {
-    	int x;
-    	int y;
-		public Point2DI(int x, int y) {
+    public static class Point2D {
+    	public int x;
+    	public int y;
+		public Point2D(int x, int y) {
 			this.x = x;
 			this.y = y;
 		}
@@ -64,24 +30,19 @@ public class AStar
 		public String toString() {
 			return "(" + x + ", " + y + ")";
 		}
-		
-    		
     }
 
-    static List<Point2DI> AstarSearchPath(Point2DI start, Point2DI end, char [][] grid)
+    static List<Point2D> AstarSearchPath(Point2D start, Point2D end, float [] weights, int width, int height)
     {	
-    	float[] weights = computeWeightMap(grid);
-    	int width = grid.length;
-    	int height = grid[0].length;
     	int wsize = width * height;
     	int [] paths = new int[wsize];
-    	List<Point2DI> path = new ArrayList<Point2DI>();
+    	List<Point2D> path = new ArrayList<Point2D>();
     	int startidx = start.x + start.y * width;
     	int endidx = end.x + end.y * width;
     	if (astar(weights, height, width, startidx, endidx, paths)) {
     		int path_idx = endidx;
     		while (path_idx != startidx) {
-    			path.add(new Point2DI(path_idx % width, path_idx / width));
+    			path.add(new Point2D(path_idx % width, path_idx / width));
     			path_idx = paths[path_idx];
     		}		
     		Collections.reverse(path);
@@ -91,10 +52,6 @@ public class AStar
     }
 
     // represents a single pixel
-    /**
-     * @author ythierry
-     *
-     */
     private static class Node {
     	int idx;     // index in the flattened grid
     	float cost;  // cost of traversing this pixel
@@ -128,11 +85,9 @@ public class AStar
 		}
     };
 
-    // the top of the priority queue is the greatest element by default,
-    // but we want the smallest, so flip the sign
+    // we want the smallest cost node when we extract from PriorityQueue
     static Comparator<Node> cmpNode () {
     	return new Comparator<AStar.Node>() {
-
 			public int compare(Node n1, Node n2) {
 				return Float.compare(n1.cost,n2.cost);
 			}
@@ -154,7 +109,6 @@ public class AStar
     // weights:        flattened h x w grid of costs
     // h, w:           height and width of grid
     // start, goal:    index of start/goal in flattened grid
-    // diag_ok:        if true, allows diagonal moves (8-conn.)
     // paths (output): for each node, stores previous node in path
     static boolean astar(
     	float[] weights, int h, int w,
@@ -185,12 +139,13 @@ public class AStar
     			solution_found = true;
     			break;
     		}
-
+    		// does extracts cur from the Queue
     		nodes_to_visit.poll();
 
     		int row = cur.idx / w;
     		int col = cur.idx % w;
-    		// check bounds and find up to eight neighbors: rotate from top left to bottom
+    		// check bounds and find up to four neighbors: rotate from top left to bottom
+    		// add more elements here to have diagonal moves.
     		nbrs[0] = (row > 0) ? cur.idx - w : -1;
     		nbrs[1] = (col + 1 < w) ? cur.idx + 1 : -1;
     		nbrs[2] = (row + 1 < h) ? cur.idx + w : -1;
@@ -198,14 +153,17 @@ public class AStar
 
     		float heuristic_cost;
     		
+    		// iterate over the 4 possible moves
     		for (int i = 0; i < 4; ++i) {
     			if (nbrs[i] >= 0) {
     				// the sum of the cost so far and the cost of this move
+    				// this should be multiplied by sqrt(2) for diagonal moves
     				float wei = weights[nbrs[i]];
 
     				float new_cost = costs[cur.idx] + wei;
     				if (new_cost < costs[nbrs[i]]) {
     					// estimate the cost to the goal based on legal moves
+    					// this is manhattan, prefer linf_norm if diagonal are allowed
     					heuristic_cost = l1_norm(nbrs[i] / w, nbrs[i] % w,
     							goal / w, goal    % w);
 
