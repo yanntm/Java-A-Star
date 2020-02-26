@@ -30,7 +30,7 @@ The example main shows how to to produce the initial `float [] weights` by suppo
 
 The code is more general than the use of it done in the main ; in particular we only consider walls or empty spaces in the grid when the algorithm supports arbitrary costs.
 
-The second code example parses this large `4002*4002` grid representing a maze [maze_large.png] zoom in to see it better.
+The second code example parses this large `4002*4002` grid representing a [maze](maze_large.png) zoom in to see it better.
 It is encoded in a basic but very verbose PPM format in the `maze.zip` file; the algorithm finds a path trough this maze in *68 ms.*
 
 ## Acknowledgements
