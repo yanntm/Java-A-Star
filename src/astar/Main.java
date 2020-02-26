@@ -28,8 +28,6 @@ public class Main {
 			,{'.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.', '#', '.'}
 			,{'.', '.', '.', '#', '.', '.', '.', '#', '.', '.', '.', '#', '.'}};		
 		System.out.println(shortestPathLength(sample2));
-		
-		imageDemo();
 	}
 
 	
@@ -49,7 +47,7 @@ public class Main {
 			String [] tokens = line.split(" ");
 			int width = Integer.parseInt(tokens[0]);
 			int height = Integer.parseInt(tokens[1]);
-			// next line is palette
+			// next lines is palette size
 			sc.nextLine();
 			float [] weights = new float[width*height];
 			int cur = 0;
@@ -58,16 +56,19 @@ public class Main {
 			while (sc.hasNextLine()) {
 				int value = Integer.parseInt(sc.nextLine());
 				if (value==0) {
-					weights[cur++] = Float.MAX_VALUE; // black = wall
-				} else {
 					weights[cur++] = 1.0f; // white = walkable
+				} else {
+					weights[cur++] = Float.MAX_VALUE; // black = wall
 				}
 				// RGB so three values to a pixel
 				sc.nextLine(); sc.nextLine();
 			}
 			System.out.println("Imported maze of size "+width+" x "+ height + " cells in "+ (System.currentTimeMillis()-time)+ " ms.");
 			time = System.currentTimeMillis();
-			List<Point2D> path = AStar.AstarSearchPath(new Point2D(0, 0), new Point2D(width-1,height-1), weights, width, height);
+			Point2D start = new Point2D(1, 0);			
+			Point2D end = new Point2D(height-2, width -1);
+			assert (weights[width] <= 1.0f && weights[ (height-2) * width + width -1] <= 1.0f);
+			List<Point2D> path = AStar.AstarSearchPath(start, end, weights, width, height);
 			System.out.println("Found a path of "+path.size()+ " length in "+ (System.currentTimeMillis() - time)+ " ms.");
 		} catch (IOException e) {
 			e.printStackTrace();
